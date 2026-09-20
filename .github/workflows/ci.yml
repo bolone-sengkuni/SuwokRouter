@@ -240,13 +240,13 @@ jobs:
             --pids-limit 256 \
             --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             --tmpfs /run:rw,noexec,nosuid,size=16m \
-            --publish 127.0.0.1:14045:14045 \
+            --publish 127.0.0.1:1212:1212 \
             --volume "$volume:/app/data" \
             swayrouter:ci >/dev/null
 
           ready=false
           for _ in $(seq 1 60); do
-            if curl --fail --silent http://127.0.0.1:14045/api/health/ready >/dev/null; then
+            if curl --fail --silent http://127.0.0.1:1212/api/health/ready >/dev/null; then
               ready=true
               break
             fi
@@ -259,7 +259,7 @@ jobs:
           fi
 
           test "$(docker inspect --format '{{.Config.User}}' "$container")" = "bun"
-            curl --fail --silent http://127.0.0.1:14045/login | grep --quiet "Sway Router"
-          curl --fail --silent http://127.0.0.1:14045/api/auth/status | grep --quiet '"defaultPasswordActive":true'
+            curl --fail --silent http://127.0.0.1:1212/login | grep --quiet "Sway Router"
+          curl --fail --silent http://127.0.0.1:1212/api/auth/status | grep --quiet '"defaultPasswordActive":true'
           docker exec "$container" sh -lc \
             'test -s /app/data/auth/jwt-secret && test -s /app/data/auth/api-key-secret && test -s /app/data/auth/machine-id-salt'
