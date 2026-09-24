@@ -43,6 +43,32 @@ jobs:
     name: Server (typecheck + test + syntax)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Postgres is the only database driver and Valkey backs the cache/lock
+    # layer; both must be up before `bun test` (advisory: no sqlite fallback
+    # left in the suite).
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: suwok
+          POSTGRES_PASSWORD: suwok
+          POSTGRES_DB: suwokrouter_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+      valkey:
+        image: valkey/valkey:8-alpine
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+        ports:
+          - 6379:6379
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,6 +97,9 @@ jobs:
 
       - name: Run tests
         run: bun test
+        env:
+          DB_URL: postgres://suwok:suwok@127.0.0.1:5432/suwokrouter_test
+          REDIS_URL: redis://127.0.0.1:6379
 
       - name: Run CLI tests
         run: bun test ./cli/cli.test.js ./cli/src/runtime/discover.test.js ./cli/src/runtime/lifecycle.test.js ./cli/src/runtime/runMenu.test.js ./cli/src/runtime/update.test.js
