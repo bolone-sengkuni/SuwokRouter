@@ -117,7 +117,7 @@ jobs:
       - name: Upload binary package
         uses: actions/upload-artifact@v4
         with:
-          name: swayrouter-${{ matrix.target }}
+          name: suwokrouter-${{ matrix.target }}
           path: dist-binary
 
   dashboard:
@@ -216,14 +216,14 @@ jobs:
         run: docker compose config --quiet
 
       - name: Build image
-        run: docker build --tag swayrouter:ci .
+        run: docker build --tag suwokrouter:ci .
 
       - name: Run zero-config container smoke test
         shell: bash
         run: |
           set -euo pipefail
-          container="swayrouter-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          volume="swayrouter-ci-data-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          container="suwokrouter-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          volume="suwokrouter-ci-data-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
           cleanup() {
             docker rm --force "$container" >/dev/null 2>&1 || true
@@ -242,7 +242,7 @@ jobs:
             --tmpfs /run:rw,noexec,nosuid,size=16m \
             --publish 127.0.0.1:1212:1212 \
             --volume "$volume:/app/data" \
-            swayrouter:ci >/dev/null
+            suwokrouter:ci >/dev/null
 
           ready=false
           for _ in $(seq 1 60); do
@@ -259,7 +259,7 @@ jobs:
           fi
 
           test "$(docker inspect --format '{{.Config.User}}' "$container")" = "bun"
-            curl --fail --silent http://127.0.0.1:1212/login | grep --quiet "Sway Router"
+            curl --fail --silent http://127.0.0.1:1212/login | grep --quiet "Suwok Router"
           curl --fail --silent http://127.0.0.1:1212/api/auth/status | grep --quiet '"defaultPasswordActive":true'
           docker exec "$container" sh -lc \
             'test -s /app/data/auth/jwt-secret && test -s /app/data/auth/api-key-secret && test -s /app/data/auth/machine-id-salt'
